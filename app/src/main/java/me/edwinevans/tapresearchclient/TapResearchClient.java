@@ -12,7 +12,7 @@ public class TapResearchClient {
 
     private static AsyncHttpClient client = new AsyncHttpClient();
 
-    public static void getOffers(RequestParams params, AsyncHttpResponseHandler responseHandler) {
+    public static void getOffer(RequestParams params, AsyncHttpResponseHandler responseHandler) {
             client.post(getAbsoluteUrl("surveys/offer"), params, responseHandler);
     }
 

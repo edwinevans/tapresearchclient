@@ -2,6 +2,7 @@ package me.edwinevans.tapresearchclient;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,17 +14,23 @@ import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import cz.msebera.android.httpclient.Header;
 
 
 // Demonstrates using a TapReasearch API
 public class MainActivity extends AppCompatActivity {
-    static final String TAG = "MainActivity";
-    static String mGaid = ""; // "d93ffa86-a970-4b06-8cbe-f6de3d87b406"
-    boolean mHasOffer = false;
-    String mOfferUrl = "";
+    private static final String TAG = "MainActivity";
+    private static String mGaid = ""; // "d93ffa86-a970-4b06-8cbe-f6de3d87b406"
+    private boolean mHasOffer = false;
+    private String mOfferUrl = "";
 
-    public void getOffers()  {
+    // don't check for offer if we checked this recently
+    private static final int OFFER_CACHE_TIMEOUT_SECONDS = 30;
+    private static final String SHARED_PREF_OFFER_LAST_CHECKED = "offer_last_checked";
+    private static final String SHARED_PREF_OFFER_URL = "offer_url"; // cached
+
+    public void getOffer()  {
         // Using runOnUiThread because the loopj HTTP request handler needs to be created
         // from a looper thread. The actual HTTP request will be executed on a background thread.
         runOnUiThread(new Runnable() {
@@ -35,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
                 params.put("device_identifier", mGaid);
                 params.put("api_token", "f47e5ce81688efee79df771e9f9e9994");
                 params.put("user_identifier", "codetest123");
-                TapResearchClient.getOffers(params, new JsonHttpResponseHandler() {
+                TapResearchClient.getOffer(params, new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                         Log.d(TAG, response.toString());
@@ -50,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(int statusCode, Header[] headers, String responseString,
                                           Throwable throwable) {
-                        Log.e(TAG, "Failed to get offers. Exception: " + throwable);
+                        Log.e(TAG, "Failed to get offer. Exception: " + throwable);
                     }
                 });
             }
@@ -66,7 +73,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void OnGotGaid(String gaid) {
                 mGaid = gaid;
-                getOffers();
+                if (!getOfferFromCacheIfPossible()) {
+                    getOffer();
+                    storeOfferInCache();
+                }
             }
         });
 
@@ -99,6 +109,38 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private long getTimestampInSeconds() {
+        return System.currentTimeMillis() / 1000;
+    }
+
+    private boolean getOfferFromCacheIfPossible() {
+        SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+        long lastChecked = prefs.getLong(SHARED_PREF_OFFER_LAST_CHECKED, 0);
+        if (lastChecked == 0) {
+            return false;
+        }
+        long timestamp = getTimestampInSeconds();
+        if (timestamp - lastChecked <= OFFER_CACHE_TIMEOUT_SECONDS) {
+            String url = prefs.getString(SHARED_PREF_OFFER_URL, null);
+            if (!url.isEmpty()) {
+                mHasOffer = true;
+                mOfferUrl = url;
+                Log.d(TAG, "Loaded offer URL from cache: " + mOfferUrl);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void storeOfferInCache() {
+        SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putLong(SHARED_PREF_OFFER_LAST_CHECKED, getTimestampInSeconds());
+        editor.putString(SHARED_PREF_OFFER_URL, mOfferUrl);
+        editor.apply();
+    }
+
 
     private void showOffer() {
         Intent intent = new Intent(this, WebViewActivity.class);
