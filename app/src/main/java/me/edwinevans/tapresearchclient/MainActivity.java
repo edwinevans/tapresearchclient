@@ -30,40 +30,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String SHARED_PREF_OFFER_LAST_CHECKED = "offer_last_checked";
     private static final String SHARED_PREF_OFFER_URL = "offer_url"; // cached
 
-    public void getOffer()  {
-        // Using runOnUiThread because the loopj HTTP request handler needs to be created
-        // from a looper thread. The actual HTTP request will be executed on a background thread.
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // NOTE: In real version I'd store the params info in the TapResearchClient class
-                // if needed for other calls
-                RequestParams params = new RequestParams();
-                params.put("device_identifier", mGaid);
-                params.put("api_token", "f47e5ce81688efee79df771e9f9e9994");
-                params.put("user_identifier", "codetest123");
-                TapResearchClient.getOffer(params, new JsonHttpResponseHandler() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                        Log.d(TAG, response.toString());
-                        try {
-                            mHasOffer = response.getBoolean("has_offer");
-                            mOfferUrl = response.getString("offer_url");
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, String responseString,
-                                          Throwable throwable) {
-                        Log.e(TAG, "Failed to get offer. Exception: " + throwable);
-                    }
-                });
-            }
-        });
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,11 +69,52 @@ public class MainActivity extends AppCompatActivity {
                                 public void onClick(DialogInterface dialog, int id) {
                                     // will get dismissed
                                 }
-                    });
+                            });
                     builder.create().show();
                 }
             }
         });
+    }
+
+    public void getOffer()  {
+        // Using runOnUiThread because the loopj HTTP request handler needs to be created
+        // from a looper thread. The actual HTTP request will be executed on a background thread.
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // NOTE: In real version I'd store the params info in the TapResearchClient class
+                // if needed for other calls
+                RequestParams params = new RequestParams();
+                params.put("device_identifier", mGaid);
+                params.put("api_token", "f47e5ce81688efee79df771e9f9e9994");
+                params.put("user_identifier", "codetest123");
+                TapResearchClient.getOffer(params, new JsonHttpResponseHandler() {
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                        Log.d(TAG, response.toString());
+                        try {
+                            mHasOffer = response.getBoolean("has_offer");
+                            mOfferUrl = response.getString("offer_url");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, String responseString,
+                                          Throwable throwable) {
+                        Log.e(TAG, "Failed to get offer. Status code: " +
+                                String.valueOf(statusCode) + " Exception: " + throwable);
+                    }
+                });
+            }
+        });
+    }
+
+    private void showOffer() {
+        Intent intent = new Intent(this, WebViewActivity.class);
+        intent.putExtra("url", mOfferUrl);
+        startActivity(intent);
     }
 
     private long getTimestampInSeconds() {
@@ -139,12 +146,5 @@ public class MainActivity extends AppCompatActivity {
         editor.putLong(SHARED_PREF_OFFER_LAST_CHECKED, getTimestampInSeconds());
         editor.putString(SHARED_PREF_OFFER_URL, mOfferUrl);
         editor.apply();
-    }
-
-
-    private void showOffer() {
-        Intent intent = new Intent(this, WebViewActivity.class);
-        intent.putExtra("url", mOfferUrl);
-        startActivity(intent);
     }
 }

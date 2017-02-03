@@ -11,6 +11,10 @@ import static com.google.android.gms.ads.identifier.AdvertisingIdClient.getAdver
 
 // Class to help get the GAID on a non-UI thread (as required)
 public class AsyncGetGaid {
+    interface ResponseHandler {
+        void OnGotGaid(String gaid);
+    }
+
     static void execute(final Context context, final ResponseHandler handler) {
         AsyncTask.execute(new Runnable() {
             @Override
@@ -18,19 +22,13 @@ public class AsyncGetGaid {
                 String gaid = "";
                 try {
                     gaid = getAdvertisingIdInfo(context).getId();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (GooglePlayServicesNotAvailableException e) {
-                    e.printStackTrace();
-                } catch (GooglePlayServicesRepairableException e) {
+                } catch (IOException |
+                        GooglePlayServicesNotAvailableException |
+                        GooglePlayServicesRepairableException e) {
                     e.printStackTrace();
                 }
                 handler.OnGotGaid(gaid);
             }
         });
-    }
-
-    public interface ResponseHandler {
-        void OnGotGaid(String gaid);
     }
 }
