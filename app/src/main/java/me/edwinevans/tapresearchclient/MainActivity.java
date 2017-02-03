@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import cz.msebera.android.httpclient.Header;
 
 
-// Demonstrates using a TapReasearch API
+// Demonstrates using a TapResearch API
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static String mGaid = ""; // "d93ffa86-a970-4b06-8cbe-f6de3d87b406"
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         long timestamp = getTimestampInSeconds();
         if (timestamp - lastChecked <= OFFER_CACHE_TIMEOUT_SECONDS) {
             String url = prefs.getString(SHARED_PREF_OFFER_URL, null);
-            if (!url.isEmpty()) {
+            if (url != null && !url.isEmpty()) {
                 mHasOffer = true;
                 mOfferUrl = url;
                 Log.d(TAG, "Loaded offer URL from cache: " + mOfferUrl);
