@@ -11,7 +11,6 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.loopj.android.http.JsonHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,7 +20,9 @@ import cz.msebera.android.httpclient.Header;
 // Demonstrates using a TapResearch API
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-    private static String mGaid = ""; // "d93ffa86-a970-4b06-8cbe-f6de3d87b406"
+    private static String API_TOKEN = "f47e5ce81688efee79df771e9f9e9994";
+    private static String USER_ID = "codetest123";
+    private static String mGaid = "";
     private boolean mHasOffer = false;
     private String mOfferUrl = "";
 
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void OnGotGaid(String gaid) {
                 mGaid = gaid;
+                TapResearchClient.configure(API_TOKEN, gaid, USER_ID);
                 if (!getOfferFromCacheIfPossible()) {
                     getOffer();
                     storeOfferInCache();
@@ -82,13 +84,7 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                // NOTE: In real version I'd store the params info in the TapResearchClient class
-                // if needed for other calls
-                RequestParams params = new RequestParams();
-                params.put("device_identifier", mGaid);
-                params.put("api_token", "f47e5ce81688efee79df771e9f9e9994");
-                params.put("user_identifier", "codetest123");
-                TapResearchClient.getOffer(params, new JsonHttpResponseHandler() {
+                TapResearchClient.getOffer(new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                         Log.d(TAG, response.toString());
@@ -103,9 +99,20 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(int statusCode, Header[] headers, String responseString,
                                           Throwable throwable) {
-                        Log.e(TAG, "Failed to get offer. Status code: " +
-                                String.valueOf(statusCode) + " Exception: " + throwable);
+                        Log.e(TAG, "Failed to get offer." +
+                                " Status code: " + String.valueOf(statusCode) +
+                                " Exception: " + throwable);
                     }
+
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers,
+                                          Throwable throwable, JSONObject response) {
+                        Log.e(TAG, "Failed to get offer. +" +
+                                " Status code: " + String.valueOf(statusCode) +
+                                " Response: " + response +
+                                " Exception: " + throwable);
+                    }
+
                 });
             }
         });
