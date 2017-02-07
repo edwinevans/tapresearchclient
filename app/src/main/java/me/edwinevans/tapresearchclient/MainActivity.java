@@ -21,13 +21,14 @@ import cz.msebera.android.httpclient.Header;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static String API_TOKEN = "f47e5ce81688efee79df771e9f9e9994";
-    private static String USER_ID = "codetest123";
+    private static String USER_ID = "blahcodetest123";
     private static String mGaid = "";
     private boolean mHasOffer = false;
     private String mOfferUrl = "";
+    private String mAbandonUrl = "";
 
     // don't check for offer if we checked this recently
-    private static final int OFFER_CACHE_TIMEOUT_SECONDS = 30;
+    private static final int OFFER_CACHE_TIMEOUT_SECONDS = 5;
     private static final String SHARED_PREF_OFFER_LAST_CHECKED = "offer_last_checked";
     private static final String SHARED_PREF_OFFER_URL = "offer_url"; // cached
 
@@ -91,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             mHasOffer = response.getBoolean("has_offer");
                             mOfferUrl = response.getString("offer_url");
+                            mAbandonUrl = response.getString("abandon_url");
+                            Log.d(TAG, mAbandonUrl);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -121,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
     private void showOffer() {
         Intent intent = new Intent(this, WebViewActivity.class);
         intent.putExtra("url", mOfferUrl);
+        intent.putExtra("abandon_url", mAbandonUrl);
         startActivity(intent);
     }
 
